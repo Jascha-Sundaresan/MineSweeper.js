@@ -51,17 +51,26 @@
   }
 
   Board.prototype.tile = function(pos) {
-    x,y = pos;
-    return this.gameboard[x][y];
+    return this.gameboard[pos[0]][pos[1]];
+  }
+  
+  Board.prototype.endGame = function() {
+    this.gameboard.forEach(function(row){
+      row.forEach(function(tile){
+        if (tile.bomb) {
+          tile.$el.addClass('bomb').removeClass('unchecked');
+        }
+      })
+    })
   }
 
   var Tile = MineSweeper.Tile = function (pos, board) {
     this.pos = pos;
     this.flagged = false;
-    this.bomb = false;
     this.revealed = false;
+    this.bomb = false;
     this.board = board;
-    this.$el = $('<div>').addClass('tile')
+    this.$el = $('<div>').addClass('tile').addClass('unchecked');
     this.bindEvents();
   }
 
@@ -70,14 +79,30 @@
     this.$el.mousedown(function(event){
       switch (event.which) {
         case 1:
-          console.log('left click:' + tile.pos);
+          if (!tile.flagged) {
+            if (tile.bomb) {
+              tile.board.endGame();
+            } else {
+              tile.reveal();
+            }
+          }
           break;
         case 3:
-          console.log('right click:' + tile.pos);
+          tile.toggleFlag();
           break;
       }
 
     })
+  }
+
+  Tile.prototype.toggleFlag = function() {
+    if (this.flagged) {
+      this.flagged = false;
+      this.$el.addClass('unchecked').removeClass('flagged');
+    } else {
+      this.flagged = true;
+      this.$el.addClass('flagged').removeClass('unchecked');
+    }
   }
 
   Tile.prototype.placeBomb = function(){
@@ -85,29 +110,22 @@
   }
 
   Tile.prototype.render = function() {
-    if (this.flagged) {
-      return this.$el.addClass('flagged');
-    } else if (this.bomb) {
-      return this.$el.addClass('bomb');
-    } else if (this.revealed) {
-      var count = this.neighborMineCount
-      if (count === 0) {
-        return this.$el.addClass('empty');
-      } else {
-        return this.$el.attr( "count", this.neighborMineCount)        
-      }
-    } else {
-      return this.$el.addClass('unchecked');
-    }
+    return this.$el;
   }
 
   Tile.prototype.reveal = function() {
     if (!this.revealed) {
       this.revealed = true;
-      if (this.neighborMineCount === 0) {
+      this.$el.removeClass('unchecked')
+      var count = this.neighborMineCount();
+      if (count === 0) {
+        this.$el.addClass('empty')
         this.neighbors().forEach(function(neighbor) {
           neighbor.reveal();
         });
+      } else {
+        this.$el.addClass('checked');
+        this.$el.html(count);
       }
     }
   }
@@ -135,10 +153,11 @@
     ];
 
     var neighbors = []
+    var tile = this;
     relPos.forEach(function(pos) {
-      var actualPos = [this.pos[0] + pos[0], this.pos[1] + pos[1]];
-      if (this.board.valid(actualPos)) {
-        neighbors.push(this.board.tile(pos));
+      var actualPos = [tile.pos[0] + pos[0], tile.pos[1] + pos[1]];
+      if (tile.board.valid(actualPos)) {
+        neighbors.push(tile.board.tile(actualPos));
       }
     })
     return neighbors;

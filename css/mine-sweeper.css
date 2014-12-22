@@ -21,3 +21,15 @@ board {
 .bomb {
   background-image: url('../images/mine.png')
 }
+
+.flagged {
+  background-image: url('../images/flag.png')
+}
+
+.checked {
+  font-weight: bold;
+  font-size: 40px;
+  text-align: center;
+  vertical-align: top;
+  color: grey;
+}
