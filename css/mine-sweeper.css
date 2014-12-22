@@ -1,0 +1,23 @@
+board {
+  display: block;
+  width: 432px;
+  margin: 0 auto;
+}
+
+.row {
+  height: 48px;
+}
+
+.tile {
+  display: inline-block;
+  height: 48px;
+  width: 48px;
+}
+
+.unchecked {
+  background-image: url('../images/tile.png')
+}
+
+.bomb {
+  background-image: url('../images/mine.png')
+}

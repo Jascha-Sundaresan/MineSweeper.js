@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Mine Sweeper</title>
+
+  <script src="../js/jquery-2.1.3.min.js"></script>
+  <script src="../js/underscore.min.js"></script>
+  <script src="../js/mine-sweeper.js"></script>
+  <script src="../js/mine-sweeper-view.js"></script>
+  <link rel="stylesheet" type="text/css" href="../css/mine-sweeper.css"></link>
+</head>
+  <body oncontextmenu="return false;">
+
+    <board></board>
+
+    <script>
+      $(function () { new MineSweeper.View($('board')); });
+    </script>
+  </body>
+</html>
