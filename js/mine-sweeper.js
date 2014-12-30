@@ -3,9 +3,13 @@
     window.MineSweeper = {};
   }
 
-  var Board = MineSweeper.Board = function() {
-    this.size = 9
+  var Board = MineSweeper.Board = function(size) {
+    this.size = size;
+    this.flags = size;
     this.gameboard = buildBoard(this.size, this);
+    this.$readOut = $('<div>')
+      .addClass('read-out')
+      .append("Remaining flags: " + this.flags);
   }
 
   function buildBoard (size, board) {
@@ -18,18 +22,20 @@
       }
       gameboard.push(row);
     }
-    dispenceMines(gameboard);
+    dispenceMines(gameboard, size);
     return gameboard;
   }
 
-  function dispenceMines(board) {
-    _.sample(_.flatten(board), 9).forEach(function(tile) { 
+  function dispenceMines(board, size) {
+    _.sample(_.flatten(board), size).forEach(function(tile) { /* underscore.js methods */
       tile.placeBomb();
     })
   }
 
   Board.prototype.render = function() {
+
     var $board = $('<div>').addClass('board');
+
     this.gameboard.forEach(function(row, idx) {
       $row = $('<div>').addClass('row');
       $board.append($row);
@@ -37,7 +43,9 @@
         $row.append(tile.render());
       })
     })
-    return $board;
+    return $('<div>')
+             .html(this.$readOut)
+             .append($board);
   }
 
   Board.prototype.valid = function(pos) {
@@ -54,7 +62,7 @@
     return this.gameboard[pos[0]][pos[1]];
   }
   
-  Board.prototype.endGame = function() {
+  Board.prototype.showBombs = function() {
     this.gameboard.forEach(function(row){
       row.forEach(function(tile){
         if (tile.bomb) {
@@ -66,28 +74,31 @@
 
   var Tile = MineSweeper.Tile = function (pos, board) {
     this.pos = pos;
-    this.flagged = false;
+    this.$el = $('<div>').addClass('tile').addClass('unchecked');
+    this.board = board;
+    this.bindEvents();
+    
+    // using boolean instance variables to avoid slow .hasClass() DOM query
+
+    this.flagged = false;  
     this.revealed = false;
     this.bomb = false;
-    this.board = board;
-    this.$el = $('<div>').addClass('tile').addClass('unchecked');
-    this.bindEvents();
   }
 
   Tile.prototype.bindEvents = function() {
     var tile = this;
     this.$el.mousedown(function(event){
       switch (event.which) {
-        case 1:
+        case 1: /* left mouse click */
           if (!tile.flagged) {
             if (tile.bomb) {
-              tile.board.endGame();
+              tile.board.showBombs();
             } else {
               tile.reveal();
             }
           }
           break;
-        case 3:
+        case 3: /* right mouse click */
           tile.toggleFlag();
           break;
       }
@@ -98,11 +109,14 @@
   Tile.prototype.toggleFlag = function() {
     if (this.flagged) {
       this.flagged = false;
+      this.board.flags += 1;
       this.$el.addClass('unchecked').removeClass('flagged');
-    } else {
+    } else if (this.board.flags > 0) {
       this.flagged = true;
+      this.board.flags -= 1;
       this.$el.addClass('flagged').removeClass('unchecked');
     }
+    this.board.$readOut.html("Remaining flags: " + this.board.flags)
   }
 
   Tile.prototype.placeBomb = function(){
@@ -114,14 +128,14 @@
   }
 
   Tile.prototype.reveal = function() {
-    if (!this.revealed) {
+    if (!this.revealed && !this.flagged) {
       this.revealed = true;
       this.$el.removeClass('unchecked')
       var count = this.neighborMineCount();
       if (count === 0) {
         this.$el.addClass('empty')
         this.neighbors().forEach(function(neighbor) {
-          neighbor.reveal();
+          neighbor.reveal();  /* recursive depth-first search */
         });
       } else {
         this.$el.addClass('checked');

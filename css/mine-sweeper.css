@@ -1,7 +1,14 @@
-board {
+.read-out {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+
+.board {
   display: block;
   width: 432px;
   margin: 0 auto;
+  border: 2px solid grey;
 }
 
 .row {
